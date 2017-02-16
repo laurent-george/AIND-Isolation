@@ -7,11 +7,28 @@ You must test your agent's strength against a set of agents with known
 relative strength using tournament.py and include the results in your report.
 """
 import random
-
+import time
+from student_heuristics import combined_improved_density_at_end
 
 class Timeout(Exception):
     """Subclass base exception for code clarity."""
     pass
+
+
+def min_max_update(old_score, new_score, maximizing_player=True):
+    """
+    Tool function for min/max score updating
+
+    This function is used by alphaBeta and minimax functions
+
+    :return: Return the max score between old_score and new_score if maximizing_player is True
+             Return the min score between old_score and new_score if maximizing_player is False
+    """
+    import operator
+    cmp_operator = operator.lt if maximizing_player else operator.gt
+    if old_score is None or cmp_operator(old_score, new_score):
+        return True, new_score
+    return False, old_score
 
 
 def custom_score(game, player):
@@ -36,9 +53,7 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-
-    # TODO: finish this function!
-    raise NotImplementedError
+    return combined_improved_density_at_end(game, player)
 
 
 class CustomPlayer:
@@ -79,6 +94,7 @@ class CustomPlayer:
         self.method = method
         self.time_left = None
         self.TIMER_THRESHOLD = timeout
+        self.reached_depth = 0
 
     def get_move(self, game, legal_moves, time_left):
         """Search for the best move from the available legal moves and return a
@@ -124,19 +140,41 @@ class CustomPlayer:
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
 
+        if len(legal_moves) == 0:
+            return -1, -1
+        else:
+            # if there is a legal move we return it
+            best_move = random.choice(legal_moves)
+
         try:
             # The search method call (alpha beta or minimax) should happen in
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
-            pass
+            minimax_func = self.minimax if self.method == 'minimax' else self.alphabeta
+
+            if self.iterative:
+                # using iterative deepening we start at level 1, and increase the depth until timeout is reached
+                i = 1
+                while True:
+                    #  we could start a level self.search_depth and increase one by one this value
+                    score, best_move = minimax_func(game, depth=i, maximizing_player=True)
+                    self.reached_depth = i
+                    if score == float('inf') or score == float('-inf'):
+                        break
+                    # if we are close to timeout we don't try a new depth search, we just quit
+                    if time_left() < 30:  # time_left() is in ms
+                        break
+                    i += 1
+            else:
+                score, best_move = minimax_func(game, depth=self.search_depth, maximizing_player=True)
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
             pass
 
         # Return the best move from the last completed search iteration
-        raise NotImplementedError
+        return best_move
 
     def minimax(self, game, depth, maximizing_player=True):
         """Implement the minimax search algorithm as described in the lectures.
@@ -172,8 +210,25 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        if len(game.get_legal_moves(game.active_player)) == 0:
+            if maximizing_player:
+                return float('-inf'), (-1, -1)
+            else:
+                return float('inf'), (-1, -1)
+
+        if depth == 0:
+            # max depth reach returning score
+            return self.score(game, self), None
+
+        score, best_move = None, (-1, -1)
+        for move in game.get_legal_moves(game.active_player):
+            new_game = game.forecast_move(move)
+            new_score, new_best_move = self.minimax(new_game, depth-1, maximizing_player=not maximizing_player)
+            updated, score = min_max_update(score, new_score, maximizing_player)
+            if updated:
+                best_move = move
+
+        return score, best_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
         """Implement minimax search with alpha-beta pruning as described in the
@@ -216,5 +271,38 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        if len(game.get_legal_moves(game.active_player)) == 0:
+            if maximizing_player:
+                return float('-inf'), (-1, -1)
+            else:
+                return float('inf'), (-1, -1)
+
+        if depth == 0:
+            # max depth reach returning score
+            return self.score(game, self), None
+
+        score, best_move = None, (-1, -1)
+        rec_alpha, rec_beta = alpha, beta
+        for move in game.get_legal_moves(game.active_player):
+            new_game = game.forecast_move(move)
+            new_score, new_best_move = self.alphabeta(new_game, depth-1, maximizing_player=not maximizing_player, alpha=rec_alpha, beta=rec_beta)
+
+            updated, score = min_max_update(score, new_score, maximizing_player)
+            if updated:
+                best_move = move
+
+                # we break if alpha/beta condition is reached (no need to explore this tree anymore)
+                if maximizing_player:
+                    if score >= beta:
+                        break
+                else:
+                    if score <= alpha:
+                        break
+
+                # otherwise, we update the rec_alpha/rec_beta based on the score
+                if maximizing_player:
+                    rec_alpha = score
+                else:
+                    rec_beta = score
+
+        return score, best_move

@@ -22,6 +22,7 @@ initiative in the second match with agentB at (5, 2) as player 1 and agentA at
 import itertools
 import random
 import warnings
+from multiprocessing import Pool
 
 from collections import namedtuple
 
@@ -30,10 +31,12 @@ from sample_players import RandomPlayer
 from sample_players import null_score
 from sample_players import open_move_score
 from sample_players import improved_score
-from game_agent import CustomPlayer
-from game_agent import custom_score
+from game_agent import CustomPlayer, custom_score
+from student_heuristics import *
+import json
 
-NUM_MATCHES = 5  # number of matches against each opponent
+NUM_MATCHES = 100  # number of matches against each opponent
+#NUM_MATCHES = 20  # number of matches against each opponent
 TIME_LIMIT = 150  # number of milliseconds before timeout
 
 TIMEOUT_WARNING = "One or more agents lost a match this round due to " + \
@@ -69,6 +72,8 @@ def play_match(player1, player2):
     num_invalid_moves = {player1: 0, player2: 0}
     games = [Board(player1, player2), Board(player2, player1)]
 
+    #print(games[0].str_distances())
+
     # initialize both games with a random move and response
     for _ in range(2):
         move = random.choice(games[0].get_legal_moves())
@@ -101,6 +106,8 @@ def play_match(player1, player2):
 
     return num_wins[player1], num_wins[player2]
 
+def play_match_helper(args):
+    return play_match(*args)
 
 def play_round(agents, num_matches):
     """
@@ -110,6 +117,8 @@ def play_round(agents, num_matches):
     wins = 0.
     total = 0.
 
+    res = {}
+
     print("\nPlaying Matches:")
     print("----------")
 
@@ -118,21 +127,27 @@ def play_round(agents, num_matches):
         counts = {agent_1.player: 0., agent_2.player: 0.}
         names = [agent_1.name, agent_2.name]
         print("  Match {}: {!s:^11} vs {!s:^11}".format(idx + 1, *names), end=' ')
+        match_name = "vs_{}".format(agent_2.name)
 
         # Each player takes a turn going first
         for p1, p2 in itertools.permutations((agent_1.player, agent_2.player)):
-            for _ in range(num_matches):
-                score_1, score_2 = play_match(p1, p2)
-                counts[p1] += score_1
-                counts[p2] += score_2
-                total += score_1 + score_2
+            with Pool(4) as p:
+                #for num_match in range(num_matches):
+                scores = p.map(play_match_helper, [(p1, p2)] * num_matches)
+            #    print("Score are {} {}".format(score_1, score_2))
+                #print("Results are {}".format(scores))
+                for score_1, score_2 in scores:
+                    counts[p1] += score_1
+                    counts[p2] += score_2
+                    total += score_1 + score_2
+        res[match_name] = {"p1": counts[p1], "p2": counts[p2]}
 
         wins += counts[agent_1.player]
 
         print("\tResult: {} to {}".format(int(counts[agent_1.player]),
                                           int(counts[agent_2.player])))
 
-    return 100. * wins / total
+    return 100. * wins / total, res
 
 
 def main():
@@ -143,6 +158,8 @@ def main():
     AB_ARGS = {"search_depth": 5, "method": 'alphabeta', "iterative": False}
     MM_ARGS = {"search_depth": 3, "method": 'minimax', "iterative": False}
     CUSTOM_ARGS = {"method": 'alphabeta', 'iterative': True}
+    # For just comparing the correctness of heuristic.. using a shart search depth could help
+    #CUSTOM_ARGS = {"method": 'minimax', 'iterative': False, 'search_depth': 3}
 
     # Create a collection of CPU agents using fixed-depth minimax or alpha beta
     # search, or random selection.  The agent names encode the search method
@@ -160,22 +177,46 @@ def main():
     # systems; i.e., the performance of the student agent is considered
     # relative to the performance of the ID_Improved agent to account for
     # faster or slower computers.
-    test_agents = [Agent(CustomPlayer(score_fn=improved_score, **CUSTOM_ARGS), "ID_Improved"),
-                   Agent(CustomPlayer(score_fn=custom_score, **CUSTOM_ARGS), "Student")]
+    #test_agents = [Agent(CustomPlayer(score_fn=combined_improved_density_at_end, **CUSTOM_ARGS), "Combined improved"),
+    #               Agent(CustomPlayer(score_fn=diff_density, **CUSTOM_ARGS), "Diff density"),
+    #               Agent(CustomPlayer(score_fn=improved_score, **CUSTOM_ARGS), "ID_Improved")
+        # Agent(CustomPlayer(score_fn=combined_full, **CUSTOM_ARGS), "Combined full"),
+    #               ]
+
+    #test_agents = [Agent(CustomPlayer(score_fn=agrressive_first_then_preserving, **CUSTOM_ARGS), "Agressive first then preserving"),
+    #               Agent(CustomPlayer(score_fn=custom_score_location_using_hash_table, **CUSTOM_ARGS), "Location using hash"),
+    #               Agent(CustomPlayer(score_fn=inverted_to_center, **CUSTOM_ARGS), "Inverted Location using hash"),
+    #               Agent(CustomPlayer(score_fn=custom_score_loser, **CUSTOM_ARGS), "loser"),
+    #               Agent(CustomPlayer(score_fn=preserving_score_with_self, **CUSTOM_ARGS), "Preserving score with self"),
+    #               Agent(CustomPlayer(score_fn=aggressive_score_with_self, **CUSTOM_ARGS), "Agressive score with self"),
+    #               Agent(CustomPlayer(score_fn=custom_score, **CUSTOM_ARGS), "Custom score using coefficient"),
+    #               Agent(CustomPlayer(score_fn=improved_score, **CUSTOM_ARGS), "ID_Improved")]
+
+    test_agents = [Agent(CustomPlayer(score_fn=combined_improved_density_at_end, **CUSTOM_ARGS), "Combined_improved_and_density"),
+               Agent(CustomPlayer(score_fn=diff_density, **CUSTOM_ARGS), "Diff_density"),
+               Agent(CustomPlayer(score_fn=improved_with_sleep, **CUSTOM_ARGS), "ID_Improved_slow"),
+               Agent(CustomPlayer(score_fn=distance_to_center, **CUSTOM_ARGS), "Distance_to_center"),
+               Agent(CustomPlayer(score_fn=improved_score, **CUSTOM_ARGS), "ID_Improved")
+               ]
 
     print(DESCRIPTION)
+    full_res = {}
     for agentUT in test_agents:
         print("")
         print("*************************")
         print("{:^25}".format("Evaluating: " + agentUT.name))
         print("*************************")
-
         agents = random_agents + mm_agents + ab_agents + [agentUT]
-        win_ratio = play_round(agents, NUM_MATCHES)
+
+        win_ratio, res = play_round(agents, NUM_MATCHES)
 
         print("\n\nResults:")
         print("----------")
         print("{!s:<15}{:>10.2f}%".format(agentUT.name, win_ratio))
+        full_res[agentUT.name] = res
+
+    with open('out.json', 'w') as f:
+        json.dump(full_res, f)
 
 
 if __name__ == "__main__":

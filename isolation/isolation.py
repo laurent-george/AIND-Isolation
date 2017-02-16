@@ -12,10 +12,9 @@ import timeit
 
 from copy import deepcopy
 from copy import copy
-
+import math
 
 TIME_LIMIT_MILLIS = 200
-
 
 class Board(object):
     """
@@ -52,6 +51,29 @@ class Board(object):
         self.__board_state__ = [[Board.BLANK for i in range(width)] for j in range(height)]
         self.__last_player_move__ = {player_1: Board.NOT_MOVED, player_2: Board.NOT_MOVED}
         self.__player_symbols__ = {Board.BLANK: Board.BLANK, player_1: 1, player_2: 2}
+
+
+        #self.distance_to_center = {}
+        #center = self.width//2.0, self.height//2.0
+        #for i in range(self.width):
+        #    for j in range(self.height):
+        #        # using taxi distance
+        #        self.distance_to_center[(i, j)] = abs(i - center[0]) + abs(j - center[1])
+
+    def str_distances(self):
+
+        out = ''
+
+        for i in range(self.height):
+            out += ' | '
+
+            for j in range(self.width):
+
+                out += str(self.distance_to_center[(i, j)])
+                out += ' | '
+            out += '\n\r'
+
+        return out
 
     @property
     def active_player(self):
@@ -148,6 +170,7 @@ class Board(object):
         """
         return [(i, j) for j in range(self.width) for i in range(self.height)
             if self.__board_state__[i][j] == Board.BLANK]
+
 
     def get_player_location(self, player):
         """
@@ -321,6 +344,7 @@ class Board(object):
 
         curr_time_millis = lambda: 1000 * timeit.default_timer()
 
+
         while True:
 
             legal_player_moves = self.get_legal_moves()
@@ -349,3 +373,5 @@ class Board(object):
                 return self.__inactive_player__, move_history, "illegal move"
 
             self.apply_move(curr_move)
+
+

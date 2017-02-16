@@ -1,0 +1,96 @@
+*************************
+Evaluating: Distance
+*************************
+
+Playing Matches:
+----------
+  Match 1: Distance vs   Random       Result: 354 to 46
+  Match 2: Distance vs   MM_Null      Result: 333 to 67
+  Match 3: Distance vs   MM_Open      Result: 266 to 134
+  Match 4: Distance vs MM_Improved    Result: 239 to 161
+  Match 5: Distance vs   AB_Null      Result: 307 to 93
+  Match 6: Distance vs   AB_Open      Result: 256 to 144
+  Match 7: Distance vs AB_Improved    Result: 216 to 184
+
+
+Results:
+----------
+Distance     70.39%
+
+*************************
+Evaluating: Combined
+*************************
+
+Playing Matches:
+----------
+  Match 1: Combined vs   Random        Result: 377 to 23
+  Match 2: Combined vs   MM_Null       Result: 343 to 57
+  Match 3: Combined vs   MM_Open       Result: 300 to 100
+  Match 4: Combined vs MM_Improved     Result: 281 to 119
+  Match 5: Combined vs   AB_Null       Result: 314 to 86
+  Match 6: Combined vs   AB_Open       Result: 284 to 116
+  Match 7: Combined vs AB_Improved     Result: 273 to 127
+
+
+Results:
+----------
+Combined     77.57%
+
+*************************
+Evaluating: Diff_density
+*************************
+
+Playing Matches:
+----------
+  Match 1: Diff_density vs   Random     Result: 371 to 29
+  Match 2: Diff_density vs   MM_Null    Result: 347 to 53
+  Match 3: Diff_density vs   MM_Open    Result: 286 to 114
+  Match 4: Diff_density vs MM_Improved  Result: 264 to 136
+  Match 5: Diff_density vs   AB_Null    Result: 320 to 80
+  Match 6: Diff_density vs   AB_Open    Result: 246 to 154
+  Match 7: Diff_density vs AB_Improved  Result: 247 to 153
+
+
+Results:
+----------
+Diff_density        74.32%
+
+
+*************************
+    Evaluating: Slow_ID_Improved
+*************************
+
+Playing Matches:
+----------
+  Match 1: Slow vs   Random      Result: 274 to 126
+  Match 2: Slow vs   MM_Null     Result: 179 to 221
+  Match 3: Slow vs   MM_Open     Result: 90 to 310
+  Match 4: Slow vs MM_Improved   Result: 70 to 330
+  Match 5: Slow vs   AB_Null     Result: 127 to 273
+  Match 6: Slow vs   AB_Open     Result: 87 to 313
+  Match 7: Slow vs AB_Improved   Result: 71 to 329
+
+
+Results:
+----------
+Slow               32.07%
+
+
+*************************
+ Evaluating: ID_Improved
+*************************
+
+Playing Matches:
+----------
+  Match 1: ID_Improved vs   Random      Result: 371 to 29
+  Match 2: ID_Improved vs   MM_Null     Result: 331 to 69
+  Match 3: ID_Improved vs   MM_Open     Result: 288 to 112
+  Match 4: ID_Improved vs MM_Improved   Result: 272 to 128
+  Match 5: ID_Improved vs   AB_Null     Result: 316 to 84
+  Match 6: ID_Improved vs   AB_Open     Result: 267 to 133
+  Match 7: ID_Improved vs AB_Improved   Result: 251 to 149
+
+
+Results:
+----------
+ID_Improved         74.86%
