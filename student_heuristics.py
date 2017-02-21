@@ -34,6 +34,9 @@ def combined_improved_and_density(game, player):
 
 
 def combined_improved_density_at_end(game, player):
+    """
+    Simple evaluation function that combine improved-score heuristic and density function heuristic
+    """
     if game.move_count < 20:
         # At the beginning we need to go fast
         score = improved_score(game, player)
