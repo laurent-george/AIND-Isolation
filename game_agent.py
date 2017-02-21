@@ -8,6 +8,8 @@ relative strength using tournament.py and include the results in your report.
 """
 import random
 import time
+
+# heuristics are in the module student_heuristics
 from student_heuristics import combined_improved_density_at_end
 
 class Timeout(Exception):
@@ -134,8 +136,6 @@ class CustomPlayer:
 
         self.time_left = time_left
 
-        # TODO: finish this function!
-
         # Perform any required initializations, including selecting an initial
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
@@ -223,6 +223,7 @@ class CustomPlayer:
         score, best_move = None, (-1, -1)
         for move in game.get_legal_moves(game.active_player):
             new_game = game.forecast_move(move)
+            # we call minimax function recusively but we invert the maximizing_player parameter
             new_score, new_best_move = self.minimax(new_game, depth-1, maximizing_player=not maximizing_player)
             updated, score = min_max_update(score, new_score, maximizing_player)
             if updated:
